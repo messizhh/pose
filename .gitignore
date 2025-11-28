@@ -1,0 +1,22 @@
+# === 大数据集 ===
+phoenix2014-release/
+data/
+
+# === 编译库与构建文件 ===
+ctcdecode/
+__pycache__/
+*.py[cod]
+*.so
+.ipynb_checkpoints/
+
+# === 训练输出 ===
+work_dir/
+runs/
+logs/
+*.pth
+*.pt
+
+# === 系统文件 ===
+.DS_Store
+.vscode/
+.idea/

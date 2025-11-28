@@ -1,0 +1,63 @@
+feeder: dataset.dataloader_video_pose.VideoPoseDataset  # <--- 修改这里：指向新的 VideoPoseDataset
+phase: train
+dataset: phoenix2014
+num_epoch: 40
+work_dir: ./work_dir/pose_fusion_experiment/  # <--- 建议修改输出目录，避免覆盖
+batch_size: 2
+random_seed: 0
+test_batch_size: 2
+num_worker: 8
+device: 0,1
+log_interval: 100
+eval_interval: 1
+save_interval: 5
+evaluate_tool: sclite
+loss_weights:
+  SeqCTC: 1.0
+  # VAC 相关的 loss 如果你的新模型没用到可以注释掉，或者保留以兼容旧代码结构
+  # ConvCTC: 1.0
+  # Dist: 25.0
+
+optimizer_args:
+  optimizer: Adam
+  base_lr: 0.0001
+  step: [ 20, 30]
+  learning_ratio: 1
+  weight_decay: 0.0001
+  start_epoch: 0
+  nesterov: False
+
+feeder_args:
+  mode: 'train'
+  # datatype: 'video' # VideoPoseDataset 不再需要这个参数，它内部逻辑已定
+  num_gloss: -1
+  # drop_ratio: 1.0
+  frame_interval: 1
+  # image_scale: 1.0
+  input_size: 224
+  pose_root: './data/phoenix2014/pose_features_aligned' # <--- 新增：Pose 数据路径
+
+model: slr_network.SLRNet  # <--- 修改这里：对应 slr_network.py 里的类名
+decode_mode: beam
+model_args:
+  vocab_size: 1296  # 原名 num_classes，新代码里叫 vocab_size，请确认 slr_network.py 的 __init__ 参数名
+  # 如果你的 slr_network.py 还是用 num_classes，请改回 num_classes: 1296
+  
+  # CLIP 相关
+  # c2d_type: ViT-B/16 # 你的新 SLRNet 可能会在内部写死或通过 clip_model 传入，这里视你的 main.py 实现而定
+  
+  # Pose 相关配置
+  pose_pretrain_path: './work_dir/pose_pretrain/pose_best.pth' # <--- 确保路径存在
+  freeze_pose: True
+  
+  pose_cfg:
+    in_channels: 6
+    hidden_channels: [64, 128, 256]
+    parts: ['body', 'left', 'right']
+    t_kernel: 9
+    dropout: 0.2
+    
+  aggregator_cfg:
+    hidden_dim: 512
+    num_layers: 2
+    dropout: 0.2
